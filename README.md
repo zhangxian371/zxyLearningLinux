@@ -25,6 +25,7 @@ Pages 配置：在仓库 Settings → Pages → Source 选择 `Deploy from a bra
 | `index.html` | 前 10 天执行手册（同时是 GitHub Pages 落地页） |
 | `linux-cpp-study-plan-day11-24.html` | Day 11–24 进阶执行手册 |
 | `day01-linux-cpp-starter/` | Day 1 配套的最小 CMake 起步项目 |
+| `day03-fd-copy/` | Day 3 配套代码：`open/read/write/close` 复制 + `dup2` 重定向 demo |
 
 ## 起步项目
 
