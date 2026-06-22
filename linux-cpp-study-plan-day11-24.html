@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Linux C++ 服务器开发 Day 11-24 后续学习计划：epoll、Reactor、MySQL、Redis、聊天室项目">
+  <title>Linux C++ 服务器开发｜Day 11-24 进阶计划</title>
+  <style>
+    :root {
+      --bg: #07111f; --panel: #0d1b2d; --panel-2: #12243a; --line: #203b56;
+      --text: #eaf4ff; --muted: #91a7bd; --cyan: #43d9d3; --amber: #ffbd66;
+      --blue: #5aa9ff; --green: #64e6a6; --danger: #ff7b86; --max: 1180px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; color: var(--text); background: var(--bg); font: 16px/1.7 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    a { color: inherit; }
+    code, pre { font-family: "Cascadia Code", Consolas, monospace; }
+    .wrap { width: min(var(--max), calc(100% - 32px)); margin: auto; }
+    .hero { min-height: 560px; position: relative; display: grid; align-items: center; overflow: hidden; border-bottom: 1px solid var(--line); }
+    .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 72% 22%, rgba(67,217,211,.22), transparent 34%), linear-gradient(120deg, #06101d 0%, #07111f 52%, #10243a 100%); }
+    .hero::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(67,217,211,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(67,217,211,.05) 1px, transparent 1px); background-size: 34px 34px; mask-image: linear-gradient(to right, black, transparent 78%); }
+    .hero-content { position: relative; z-index: 1; max-width: 820px; padding: 70px 0; }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; padding: 7px 12px; border: 1px solid #245775; border-radius: 999px; color: var(--cyan); background: rgba(10,34,51,.75); font-size: 13px; font-weight: 800; letter-spacing: .08em; }
+    h1 { margin: 20px 0 16px; font-size: clamp(40px, 6.5vw, 76px); line-height: 1.04; letter-spacing: -.045em; }
+    h1 span { color: var(--cyan); }
+    .lead { max-width: 760px; margin: 0 0 28px; color: #c6d8e9; font-size: clamp(18px, 2vw, 22px); }
+    .hero-stats { display: flex; flex-wrap: wrap; gap: 12px; }
+    .stat { min-width: 132px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: rgba(8,24,40,.82); backdrop-filter: blur(8px); }
+    .stat strong { display: block; color: var(--amber); font-size: 20px; }
+    .stat small { color: var(--muted); }
+    nav { position: sticky; top: 0; z-index: 20; border-bottom: 1px solid var(--line); background: rgba(7,17,31,.9); backdrop-filter: blur(14px); }
+    .nav-inner { display: flex; gap: 9px; padding: 12px 0; overflow-x: auto; scrollbar-width: thin; }
+    nav a { flex: 0 0 auto; text-decoration: none; color: var(--muted); padding: 7px 11px; border-radius: 9px; font-size: 14px; }
+    nav a:hover { color: var(--text); background: var(--panel-2); }
+    main { padding: 70px 0 100px; }
+    section { margin-bottom: 92px; scroll-margin-top: 85px; }
+    .section-kicker { color: var(--cyan); font-size: 13px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
+    h2 { margin: 7px 0 12px; font-size: clamp(30px, 4vw, 46px); line-height: 1.15; letter-spacing: -.025em; }
+    .section-intro { max-width: 820px; margin: 0 0 32px; color: var(--muted); font-size: 18px; }
+    .grid-3, .deliverables { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(145deg, rgba(18,36,58,.95), rgba(9,24,40,.95)); box-shadow: 0 18px 50px rgba(0,0,0,.15); }
+    .card .num { color: var(--amber); font: 700 13px/1 monospace; }
+    .card h3 { margin: 11px 0 8px; font-size: 20px; }
+    .card p, .card li { color: var(--muted); }
+    .route { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; position: relative; }
+    .route::before { content: ""; position: absolute; left: 4%; right: 4%; top: 28px; height: 2px; background: linear-gradient(90deg, var(--cyan), var(--blue), var(--amber), var(--green)); }
+    .route-item { position: relative; text-align: center; }
+    .route-dot { width: 56px; height: 56px; display: grid; place-items: center; margin: 0 auto 10px; border: 2px solid var(--cyan); border-radius: 50%; background: var(--bg); color: var(--cyan); font-weight: 800; font-size: 13px; }
+    .route-item:nth-child(n+4) .route-dot { border-color: var(--amber); color: var(--amber); }
+    .route-item:nth-child(n+6) .route-dot { border-color: var(--green); color: var(--green); }
+    .route-item b { display: block; font-size: 14px; }
+    .route-item small { color: var(--muted); }
+    .day { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 28px; padding: 34px 0; border-top: 1px solid var(--line); scroll-margin-top: 76px; }
+    .day:last-child { border-bottom: 1px solid var(--line); }
+    .day-index { position: sticky; top: 86px; align-self: start; }
+    .day-index span { display: block; color: var(--cyan); font: 800 14px/1 monospace; }
+    .day-index strong { display: block; margin-top: 8px; font-size: 26px; line-height: 1.2; }
+    .day-index small { color: var(--muted); }
+    .goal { margin: 0 0 20px; padding: 16px 18px; border-left: 3px solid var(--amber); background: rgba(255,189,102,.07); border-radius: 0 12px 12px 0; }
+    .goal b { color: var(--amber); }
+    .day-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .panel { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+    .panel.wide { grid-column: 1 / -1; }
+    .panel h4 { margin: 0 0 12px; color: #d9edff; font-size: 17px; }
+    .panel ul, .panel ol { margin: 0; padding-left: 21px; color: var(--muted); }
+    .panel li + li { margin-top: 6px; }
+    pre { margin: 0; padding: 17px; overflow-x: auto; border: 1px solid #284a68; border-radius: 12px; color: #d8f6f4; background: #06101d; font-size: 13px; line-height: 1.6; }
+    .cmd { color: var(--green); }
+    .checklist { display: grid; gap: 8px; }
+    .check { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border-radius: 9px; color: var(--muted); cursor: pointer; }
+    .check:hover { background: rgba(255,255,255,.035); }
+    .check input { margin-top: 6px; accent-color: var(--cyan); }
+    .check:has(input:checked) span { color: #698398; text-decoration: line-through; }
+    .diagram { padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: radial-gradient(circle at 50% 0, rgba(67,217,211,.08), transparent 40%), #091727; overflow-x: auto; }
+    .flow { min-width: 720px; display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .node { min-width: 112px; padding: 14px 12px; text-align: center; border: 1px solid #2d6283; border-radius: 12px; background: #102a40; }
+    .arrow { color: var(--cyan); font-size: 22px; }
+    .callout { padding: 18px 20px; border: 1px solid #514624; border-radius: 14px; color: #ead8af; background: #211d12; }
+    .progress-box { position: fixed; right: 20px; bottom: 20px; z-index: 30; width: 210px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 13px; background: rgba(9,24,40,.94); box-shadow: 0 10px 40px rgba(0,0,0,.35); backdrop-filter: blur(12px); }
+    .progress-label { display: flex; justify-content: space-between; color: var(--muted); font-size: 12px; }
+    .progress-track { height: 7px; margin-top: 8px; overflow: hidden; border-radius: 9px; background: #1d3448; }
+    .progress-bar { width: 0; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green)); transition: width .25s; }
+    footer { padding: 32px 0 90px; border-top: 1px solid var(--line); color: var(--muted); }
+    @media (max-width: 900px) {
+      .grid-3, .deliverables { grid-template-columns: 1fr; }
+      .route { grid-template-columns: 1fr; text-align: left; }
+      .route::before { left: 27px; right: auto; top: 20px; bottom: 20px; width: 2px; height: auto; }
+      .route-item { display: grid; grid-template-columns: 56px 1fr; gap: 13px; text-align: left; align-items: center; }
+      .route-dot { margin: 0; } .route-item small { grid-column: 2; margin-top: -20px; }
+      .day { grid-template-columns: minmax(0, 1fr); } .day-index { position: static; }
+      .day-grid { grid-template-columns: 1fr; } .panel.wide { grid-column: auto; }
+      .progress-box { left: 16px; right: 16px; bottom: 12px; width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="wrap hero-content">
+      <div class="eyebrow">DAY 11-24 · EPOLL / REACTOR / MYSQL / REDIS / CHATROOM</div>
+      <h1>从阻塞线程池到<br><span>完整聊天室项目</span></h1>
+      <p class="lead">这是前 10 天计划之后的进阶阶段。目标不是“听过 epoll 和 Reactor”，而是能解释事件驱动服务器的工作方式，并交付一个带登录、房间、消息持久化和在线状态的聊天室。</p>
+      <div class="hero-stats">
+        <div class="stat"><strong>14 days</strong><small>建议周期</small></div>
+        <div class="stat"><strong>epoll</strong><small>LT / ET / 非阻塞</small></div>
+        <div class="stat"><strong>Reactor</strong><small>事件分发架构</small></div>
+        <div class="stat"><strong>1 project</strong><small>完整聊天室验收</small></div>
+      </div>
+    </div>
+  </header>
+
+  <nav><div class="wrap nav-inner">
+    <a href="#why14">为什么 14 天</a><a href="#map">路线图</a>
+    <a href="#day11">D11</a><a href="#day12">D12</a><a href="#day13">D13</a><a href="#day14">D14</a>
+    <a href="#day15">D15</a><a href="#day16">D16</a><a href="#day17">D17</a><a href="#day18">D18</a>
+    <a href="#day19">D19</a><a href="#day20">D20</a><a href="#day21">D21</a><a href="#day22">D22</a>
+    <a href="#day23">D23</a><a href="#day24">D24</a><a href="#finish">最终验收</a>
+  </div></nav>
+
+  <main class="wrap">
+    <section id="why14">
+      <div class="section-kicker">Planning decision</div><h2>为什么我建议后续不是 10 天，而是 14 天</h2>
+      <p class="section-intro">这几个主题有明显依赖关系：没有非阻塞 I/O，epoll 会学成 API 背诵；没有 Reactor，聊天室容易写成一团回调；没有数据库和缓存边界，项目无法接近真实后端。14 天是“能做出可演示一期项目”的较小完整周期。</p>
+      <div class="grid-3">
+        <article class="card"><span class="num">01 / IO MODEL</span><h3>epoll 至少需要 4 天</h3><p>非阻塞、EAGAIN、LT、ET、定时器和连接生命周期必须连起来。只学函数签名没有工程价值。</p></article>
+        <article class="card"><span class="num">02 / ARCH</span><h3>Reactor 需要重构练习</h3><p>Reactor 的价值在于把 accept、read、write、timer、业务分发放进清晰的对象边界，而不是画一张图。</p></article>
+        <article class="card"><span class="num">03 / PROJECT</span><h3>聊天室需要验收闭环</h3><p>登录、房间、广播、私聊、离线消息、限流、日志、压测、崩溃恢复，至少要留出 5 天。</p></article>
+      </div>
+      <div class="callout" style="margin-top:22px"><b>压缩方案：</b>如果只想 10 天，可以把 Day 11-20 作为一轮速通，把 Day 21-24 当作加餐。但如果目标是找 Linux C++ 服务器后台开发方向的工作，建议完整做完 Day 11-24。</div>
+    </section>
+
+    <section id="map">
+      <div class="section-kicker">Learning map</div><h2>后续 14 天主线</h2>
+      <p class="section-intro">先把 I/O 模型升级到事件驱动，再把代码组织成 Reactor，随后接入 MySQL 和 Redis，最后围绕聊天室项目做功能、稳定性和可观测性。</p>
+      <div class="route">
+        <div class="route-item"><div class="route-dot">11</div><b>非阻塞</b><small>EAGAIN 与状态机</small></div>
+        <div class="route-item"><div class="route-dot">12</div><b>poll/select</b><small>理解多路复用</small></div>
+        <div class="route-item"><div class="route-dot">13-14</div><b>epoll</b><small>LT / ET / 定时器</small></div>
+        <div class="route-item"><div class="route-dot">15-16</div><b>Reactor</b><small>事件循环与连接对象</small></div>
+        <div class="route-item"><div class="route-dot">17-18</div><b>MySQL</b><small>表设计与连接池</small></div>
+        <div class="route-item"><div class="route-dot">19-20</div><b>Redis</b><small>缓存、在线状态、限流</small></div>
+        <div class="route-item"><div class="route-dot">21-24</div><b>聊天室</b><small>交付、压测、复盘</small></div>
+      </div>
+    </section>
+
+    <section id="days">
+      <div class="section-kicker">Day by day</div><h2>逐日执行手册</h2>
+      <p class="section-intro">每一天都按“概念、编码、破坏实验、验收”推进。勾选状态保存在当前浏览器。</p>
+
+      <article class="day" id="day11">
+        <aside class="day-index"><span>DAY 11</span><strong>非阻塞 I/O</strong><small>进入事件驱动前的地基</small></aside>
+        <div><p class="goal"><b>今日目标：</b>把 Day 10 的连接处理改成非阻塞 fd，能正确处理 <code>EAGAIN</code>、短读、短写和半关闭。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>核心概念</h4><ul><li><code>O_NONBLOCK</code> 改变的是系统调用返回方式，不改变 TCP 字节流语义。</li><li><code>EAGAIN/EWOULDBLOCK</code> 表示当前不能继续，不是连接出错。</li><li>非阻塞写必须维护输出缓冲区，不能假设一次 <code>send</code> 成功。</li><li>连接对象需要保存读缓冲、写缓冲、解析状态和关闭状态。</li></ul></div>
+            <div class="panel"><h4>命令与代码</h4><pre>fcntl(fd, F_SETFL, old_flags | O_NONBLOCK);
+ss -antp | grep 8080
+strace -e trace=recvfrom,sendto ./server</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>封装 <code>set_nonblock(fd)</code>。</li><li>把连接 fd 设为非阻塞，循环读到 <code>EAGAIN</code> 为止。</li><li>实现连接级输出缓冲，短写后保留剩余数据。</li><li>写一份状态说明：什么时候关闭连接，什么时候继续等待。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>能解释 EAGAIN 为什么不是错误</span></label><label class="check"><input type="checkbox"><span>大消息发送不会因为短写丢数据</span></label><label class="check"><input type="checkbox"><span>客户端半关闭时服务端行为可预测</span></label></div></div>
+            <div class="panel"><h4>危险信号</h4><p>如果代码里出现“send 失败就 close”的粗暴逻辑，说明还没真正进入非阻塞模型。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day12">
+        <aside class="day-index"><span>DAY 12</span><strong>select / poll</strong><small>先理解多路复用本质</small></aside>
+        <div><p class="goal"><b>今日目标：</b>用 <code>poll</code> 写一个单线程多客户端 Echo Server，理解“一个线程管理多个 fd”的基本方式。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>理解重点</h4><ul><li>I/O 多路复用不是并行执行，而是等待多个 fd 的就绪事件。</li><li><code>select</code> 有 fd 集合和数量限制，<code>poll</code> 用数组表达 fd 集合。</li><li>就绪只是“现在调用大概率不会阻塞”，不等于读写一定完成。</li><li>仍然需要非阻塞和循环读写。</li></ul></div>
+            <div class="panel"><h4>实验</h4><pre>poll(fds.data(), fds.size(), timeout_ms);
+revents &amp; POLLIN
+revents &amp; POLLOUT
+revents &amp; POLLHUP</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>用 <code>poll</code> 管理监听 fd 和所有连接 fd。</li><li>客户端发来长度前缀消息后回显。</li><li>只有连接有待发送数据时才关注 <code>POLLOUT</code>。</li><li>连接关闭后从数组中移除，避免无效 fd 残留。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>单线程支持 20 个客户端同时在线</span></label><label class="check"><input type="checkbox"><span>能说清 poll 与阻塞 accept 循环的差异</span></label><label class="check"><input type="checkbox"><span>连接关闭后 fd 数量回落</span></label></div></div>
+            <div class="panel"><h4>复盘题</h4><p>为什么 poll 每次都要线性扫描 fd 数组？连接数量很大时，这会带来什么成本？</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day13">
+        <aside class="day-index"><span>DAY 13</span><strong>epoll LT</strong><small>Linux 高并发 I/O 入口</small></aside>
+        <div><p class="goal"><b>今日目标：</b>用 <code>epoll</code> 的 LT 模式重写 Day 12 服务端，掌握 add/mod/del 和事件循环。</p>
+          <div class="diagram"><div class="flow"><div class="node">epoll_create1</div><div class="arrow">→</div><div class="node">epoll_ctl ADD</div><div class="arrow">→</div><div class="node">epoll_wait</div><div class="arrow">→</div><div class="node">处理事件</div><div class="arrow">→</div><div class="node">MOD / DEL</div></div></div>
+          <div class="day-grid" style="margin-top:15px">
+            <div class="panel"><h4>理解重点</h4><ul><li>epoll 管理的是内核中的兴趣列表和就绪列表。</li><li>LT 模式下，只要条件仍满足，事件会再次被通知。</li><li><code>EPOLLIN</code>、<code>EPOLLOUT</code>、<code>EPOLLERR</code>、<code>EPOLLHUP</code> 要一起考虑。</li><li><code>data.ptr</code> 可以指向连接对象，避免全局 fd 查找。</li></ul></div>
+            <div class="panel"><h4>骨架</h4><pre>int ep = epoll_create1(EPOLL_CLOEXEC);
+epoll_ctl(ep, EPOLL_CTL_ADD, listen_fd, &amp;ev);
+while (running) {
+  int n = epoll_wait(ep, events, max_events, timeout);
+  for (int i = 0; i &lt; n; ++i) handle(events[i]);
+}</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>把 poll 版本迁移到 epoll LT。</li><li>监听 fd 可读时循环 accept 到 EAGAIN。</li><li>连接可读时读到 EAGAIN；可写时写到 EAGAIN 或清空缓冲。</li><li>输出缓冲为空后取消关注 <code>EPOLLOUT</code>。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>100 个客户端连接、收发、退出无 fd 泄漏</span></label><label class="check"><input type="checkbox"><span>能解释 epoll_ctl ADD/MOD/DEL 的使用时机</span></label><label class="check"><input type="checkbox"><span>服务端 idle 时 CPU 不空转</span></label></div></div>
+            <div class="panel"><h4>观察命令</h4><pre>strace -e trace=epoll_wait,epoll_ctl ./server
+ss -antp | grep 8080
+ls /proc/&lt;PID&gt;/fd | wc -l</pre></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day14">
+        <aside class="day-index"><span>DAY 14</span><strong>epoll ET + 定时器</strong><small>边沿触发与连接超时</small></aside>
+        <div><p class="goal"><b>今日目标：</b>理解 ET 模式为什么必须配合非阻塞和“读写到 EAGAIN”，并实现空闲连接超时清理。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>核心概念</h4><ul><li>ET 是状态变化时通知；没有读干净，后续可能不再通知。</li><li>ET 写法的关键不是加 <code>EPOLLET</code>，而是事件处理循环必须完整。</li><li>定时器用于清理空闲连接、心跳超时和周期任务。</li><li>可以先用最小堆定时器，不急着上时间轮。</li></ul></div>
+            <div class="panel"><h4>关键循环</h4><pre>for (;;) {
+  ssize_t n = recv(fd, buf, sizeof(buf), 0);
+  if (n &gt; 0) append(buf, n);
+  else if (n == 0) close_conn();
+  else if (errno == EAGAIN) break;
+  else if (errno == EINTR) continue;
+  else close_conn();
+}</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>为 epoll 事件加上 <code>EPOLLET</code>，通过测试证明无消息丢失。</li><li>实现基于 <code>steady_clock</code> 的连接最近活跃时间。</li><li>每次 <code>epoll_wait</code> 使用最近定时器计算 timeout。</li><li>超过 60 秒无读写的连接自动关闭，并输出日志。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>随机拆包、粘包、慢速发送都能正确解析</span></label><label class="check"><input type="checkbox"><span>故意不读干净时能复现 ET 卡住问题</span></label><label class="check"><input type="checkbox"><span>空闲连接按预期被踢下线</span></label></div></div>
+            <div class="panel"><h4>口述题</h4><p>LT 和 ET 的区别，不要只说“水平触发”和“边沿触发”，要能结合缓冲区状态解释。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day15">
+        <aside class="day-index"><span>DAY 15</span><strong>Reactor 模型</strong><small>从循环到架构</small></aside>
+        <div><p class="goal"><b>今日目标：</b>把 epoll 服务端重构为 Reactor：事件循环、Channel、Acceptor、Connection 边界清晰。</p>
+          <div class="diagram"><div class="flow"><div class="node">EventLoop</div><div class="arrow">→</div><div class="node">Poller / Epoll</div><div class="arrow">→</div><div class="node">Channel</div><div class="arrow">→</div><div class="node">Callback</div><div class="arrow">→</div><div class="node">Connection</div></div></div>
+          <div class="day-grid" style="margin-top:15px">
+            <div class="panel"><h4>对象边界</h4><ul><li><code>EventLoop</code>：拥有 epoll fd，负责循环和任务执行。</li><li><code>Channel</code>：封装 fd 关心的事件和回调。</li><li><code>Acceptor</code>：只负责监听和新连接创建。</li><li><code>Connection</code>：拥有读写缓冲、协议解析和关闭流程。</li></ul></div>
+            <div class="panel"><h4>不要过度设计</h4><p>今天先做单 Reactor 单线程。不要同时引入多 Reactor、线程池、协程和复杂模板，否则很难定位问题。</p></div>
+            <div class="panel wide"><h4>重构任务</h4><ol><li>把散落的 <code>epoll_ctl</code> 调用收敛到 <code>Poller</code>。</li><li>每个 fd 对应一个 <code>Channel</code>，事件到达后调用回调。</li><li><code>Connection</code> 提供 <code>send</code>、<code>shutdown</code>、<code>close</code> 接口。</li><li>保持原有 Echo 和长度前缀协议测试全部通过。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>新增业务处理时不需要改 epoll 主循环</span></label><label class="check"><input type="checkbox"><span>能画出事件从 epoll_wait 到业务回调的路径</span></label><label class="check"><input type="checkbox"><span>旧测试通过，且无 fd 生命周期混乱</span></label></div></div>
+            <div class="panel"><h4>复盘题</h4><p>Reactor 解决的是代码组织和事件分发问题，不会自动让业务变快。它的收益和代价分别是什么？</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day16">
+        <aside class="day-index"><span>DAY 16</span><strong>业务分发与线程池</strong><small>Reactor 不被慢任务拖死</small></aside>
+        <div><p class="goal"><b>今日目标：</b>让 I/O 线程只做网络事件，耗时业务丢给工作线程，并安全地把结果投递回 EventLoop。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>核心概念</h4><ul><li>I/O 线程不能执行慢 SQL、复杂计算或长时间阻塞操作。</li><li>跨线程操作连接对象需要明确线程归属。</li><li>常见做法：业务线程产出结果，投递回对应 EventLoop 再发送。</li><li><code>eventfd</code> 可用于唤醒事件循环。</li></ul></div>
+            <div class="panel"><h4>任务模型</h4><pre>onMessage(conn, msg):
+  workerPool.submit([connId, msg] {
+    result = handleBusiness(msg);
+    loop.runInLoop([connId, result] {
+      conn.send(result);
+    });
+  });</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>把 Day 10 线程池接到 Reactor 后面。</li><li>实现 <code>EventLoop::runInLoop</code> 或 <code>queueInLoop</code>。</li><li>用 <code>eventfd</code> 唤醒阻塞在 <code>epoll_wait</code> 的 I/O 线程。</li><li>连接关闭后，投递回来的旧任务不能访问已释放对象。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>慢业务不会阻塞其他客户端收发</span></label><label class="check"><input type="checkbox"><span>连接关闭后旧业务结果被安全丢弃</span></label><label class="check"><input type="checkbox"><span>TSan 无数据竞争报告</span></label></div></div>
+            <div class="panel"><h4>工程判断</h4><p>这一阶段先用 connId 或弱引用规避悬空访问。不要为了“优雅”引入难以解释的共享所有权。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day17">
+        <aside class="day-index"><span>DAY 17</span><strong>MySQL 基础接入</strong><small>用户与消息落库</small></aside>
+        <div><p class="goal"><b>今日目标：</b>设计聊天室最小表结构，并用 C++ 完成用户注册、登录校验和消息写入。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>表设计</h4><ul><li><code>users(id, name, password_hash, created_at)</code></li><li><code>rooms(id, name, created_at)</code></li><li><code>room_members(room_id, user_id, joined_at)</code></li><li><code>messages(id, room_id, user_id, content, created_at)</code></li></ul></div>
+            <div class="panel"><h4>SQL 原则</h4><ul><li>所有外部输入必须走参数绑定或预处理语句。</li><li>密码不能明文存储，至少保存哈希和盐。</li><li>关键查询要有索引：用户名唯一索引、房间消息时间索引。</li><li>数据库错误要转成明确业务错误，不要直接泄露内部信息。</li></ul></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>写 <code>schema.sql</code> 和初始化脚本。</li><li>封装 <code>UserRepository</code> 和 <code>MessageRepository</code>。</li><li>实现注册、登录、发送消息落库。</li><li>写单元测试覆盖重复用户名、错误密码、空消息、超长消息。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>服务重启后用户和历史消息仍存在</span></label><label class="check"><input type="checkbox"><span>SQL 注入测试不能绕过登录</span></label><label class="check"><input type="checkbox"><span>能解释主键、唯一索引和普通索引的区别</span></label></div></div>
+            <div class="panel"><h4>建议命令</h4><pre>mysql -u root -p
+source schema.sql
+EXPLAIN SELECT * FROM messages WHERE room_id=1 ORDER BY id DESC LIMIT 20;</pre></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day18">
+        <aside class="day-index"><span>DAY 18</span><strong>MySQL 连接池</strong><small>避免业务线程反复建连</small></aside>
+        <div><p class="goal"><b>今日目标：</b>实现一个简单可靠的 MySQL 连接池，并把数据库访问接入业务线程池。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>理解重点</h4><ul><li>数据库连接是昂贵资源，不能每条消息都新建连接。</li><li>连接池需要最大连接数、等待队列、超时、健康检查。</li><li>连接借出后必须归还，RAII guard 很适合做这件事。</li><li>事务要明确提交和回滚边界。</li></ul></div>
+            <div class="panel"><h4>接口草图</h4><pre>class MysqlPool {
+ public:
+  MysqlConnGuard acquire(Duration timeout);
+};
+
+class MysqlConnGuard {
+ public:
+  ~MysqlConnGuard(); // return to pool
+};</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>连接池启动时创建最小连接数。</li><li>业务线程从池里借连接，超时则返回“系统繁忙”。</li><li>模拟连接断开，下一次借出前能检测并重连。</li><li>注册用户和加入房间放进事务，失败时回滚。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>并发 50 个登录请求不会创建无限连接</span></label><label class="check"><input type="checkbox"><span>连接忘记归还的测试能被发现或避免</span></label><label class="check"><input type="checkbox"><span>数据库重启后服务能给出明确错误并恢复</span></label></div></div>
+            <div class="panel"><h4>复盘题</h4><p>连接池满了应该排队、失败还是降级？不同选择对延迟和稳定性有什么影响？</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day19">
+        <aside class="day-index"><span>DAY 19</span><strong>Redis 基础接入</strong><small>在线状态与会话</small></aside>
+        <div><p class="goal"><b>今日目标：</b>用 Redis 保存在线用户、登录 token 和房间成员缓存，理解缓存不是数据库的替代品。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>使用边界</h4><ul><li>MySQL 保存权威数据，Redis 保存快取、状态、限流和临时数据。</li><li>在线状态适合 Redis，因为它随连接变化，不需要长期持久化。</li><li>token 需要过期时间，避免永久有效。</li><li>缓存命中失败必须能回源 MySQL 或返回明确错误。</li></ul></div>
+            <div class="panel"><h4>Key 设计</h4><pre>user:token:&lt;token&gt; -&gt; user_id  EX 86400
+user:online:&lt;user_id&gt; -&gt; conn_id EX 120
+room:members:&lt;room_id&gt; -&gt; set(user_id)
+rate:login:&lt;ip&gt; -&gt; counter EX 60</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>登录成功后生成 token，并写入 Redis。</li><li>连接认证时用 token 找 user_id。</li><li>连接建立写在线状态，断开时删除或等待过期。</li><li>缓存房间成员列表，并提供失效策略。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>服务重启后 token 仍可在有效期内使用</span></label><label class="check"><input type="checkbox"><span>用户断线后在线状态会消失</span></label><label class="check"><input type="checkbox"><span>能解释 Redis 与 MySQL 各自负责什么</span></label></div></div>
+            <div class="panel"><h4>命令观察</h4><pre>redis-cli KEYS 'user:*'
+redis-cli TTL user:token:xxx
+redis-cli SMEMBERS room:members:1</pre></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day20">
+        <aside class="day-index"><span>DAY 20</span><strong>Redis 限流与 Pub/Sub</strong><small>保护服务与跨进程广播</small></aside>
+        <div><p class="goal"><b>今日目标：</b>实现登录限流和基础 Pub/Sub，为后续多进程聊天室打下边界。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>核心概念</h4><ul><li>限流不是安全全部，但可以降低暴力尝试和误用流量。</li><li>计数器限流简单，滑动窗口更准确，令牌桶更平滑。</li><li>Redis Pub/Sub 是实时广播，不保证离线可靠投递。</li><li>可靠离线消息仍应落 MySQL。</li></ul></div>
+            <div class="panel"><h4>限流草图</h4><pre>INCR rate:login:&lt;ip&gt;
+EXPIRE rate:login:&lt;ip&gt; 60
+if count &gt; 20:
+  reject login</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>给登录接口加 IP 维度限流。</li><li>给发送消息加用户维度限流。</li><li>实现 <code>room:&lt;id&gt;</code> 频道发布和订阅。</li><li>明确 Pub/Sub 断线期间消息如何处理：在线走推送，历史从 MySQL 拉。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>连续错误登录超过阈值会被拒绝</span></label><label class="check"><input type="checkbox"><span>Pub/Sub 能让两个服务进程收到同一房间消息</span></label><label class="check"><input type="checkbox"><span>离线用户上线后可从 MySQL 拉历史</span></label></div></div>
+            <div class="panel"><h4>复盘题</h4><p>为什么 Pub/Sub 不能当消息队列？如果要可靠队列，应考虑 Redis Streams、MQ 或数据库表。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day21">
+        <aside class="day-index"><span>DAY 21</span><strong>聊天室协议</strong><small>命令、响应与错误码</small></aside>
+        <div><p class="goal"><b>今日目标：</b>定义稳定的聊天室应用协议，让客户端和服务端不靠临时字符串猜含义。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>协议命令</h4><ul><li><code>REGISTER</code>：注册用户。</li><li><code>LOGIN</code>：登录获取 token。</li><li><code>AUTH</code>：连接认证。</li><li><code>JOIN</code>：加入房间。</li><li><code>SEND</code>：发送房间消息。</li><li><code>DM</code>：私聊。</li><li><code>HISTORY</code>：拉历史消息。</li></ul></div>
+            <div class="panel"><h4>消息格式</h4><pre>{
+  "seq": 12,
+  "type": "SEND",
+  "room_id": 1,
+  "content": "hello"
+}</pre></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>在长度前缀帧之上承载 JSON 或自定义 KV 格式。</li><li>每个请求带 <code>seq</code>，响应原样返回，方便客户端对应。</li><li>定义统一错误码：认证失败、无权限、参数错误、频率过高、内部错误。</li><li>写协议文档和 20 个协议解析测试。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>非法 JSON、缺字段、字段类型错误都能返回明确错误</span></label><label class="check"><input type="checkbox"><span>客户端可根据 seq 对应响应</span></label><label class="check"><input type="checkbox"><span>协议文档能让另一个人写客户端</span></label></div></div>
+            <div class="panel"><h4>工程判断</h4><p>先用 JSON 降低调试成本。等项目跑通后，再考虑 Protobuf 这类二进制协议。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day22">
+        <aside class="day-index"><span>DAY 22</span><strong>聊天室一期功能</strong><small>能真实使用</small></aside>
+        <div><p class="goal"><b>今日目标：</b>完成聊天室核心闭环：注册、登录、加入房间、群聊、私聊、历史消息。</p>
+          <div class="diagram"><div class="flow"><div class="node">Client</div><div class="arrow">→</div><div class="node">Reactor Server</div><div class="arrow">→</div><div class="node">Business Pool</div><div class="arrow">→</div><div class="node">MySQL</div><div class="arrow">+</div><div class="node">Redis</div></div></div>
+          <div class="day-grid" style="margin-top:15px">
+            <div class="panel"><h4>功能清单</h4><ul><li>用户注册和登录。</li><li>token 认证连接。</li><li>加入默认大厅。</li><li>房间消息广播给在线成员。</li><li>私聊在线推送，离线落库。</li><li>拉取最近 50 条历史消息。</li></ul></div>
+            <div class="panel"><h4>客户端</h4><p>写一个命令行客户端就够：支持 <code>/login</code>、<code>/join</code>、<code>/room</code>、<code>/dm</code>、<code>/history</code>、<code>/quit</code>。</p></div>
+            <div class="panel wide"><h4>编码任务</h4><ol><li>打通完整业务链路，不再停留在 Echo。</li><li>服务端日志打印请求类型、用户、房间、耗时和错误码。</li><li>客户端断线重连后可重新认证。</li><li>所有业务错误都走统一响应，不让连接直接崩掉。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>三个客户端可在同一房间聊天</span></label><label class="check"><input type="checkbox"><span>私聊只发送给目标用户</span></label><label class="check"><input type="checkbox"><span>服务重启后历史消息仍可查询</span></label></div></div>
+            <div class="panel"><h4>今日底线</h4><p>功能少一点可以，但链路必须闭合：网络、协议、业务、MySQL、Redis、日志都要经过一次真实请求。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day23">
+        <aside class="day-index"><span>DAY 23</span><strong>稳定性与压测</strong><small>让项目经得住破坏</small></aside>
+        <div><p class="goal"><b>今日目标：</b>主动制造异常，把聊天室从“能跑”推进到“可解释地稳定”。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>破坏实验</h4><ul><li>客户端发送畸形帧、超长帧、半包后断开。</li><li>MySQL 停止、Redis 停止、网络超时。</li><li>100 个客户端同时登录和发消息。</li><li>慢客户端不读取数据，观察输出缓冲增长。</li><li>服务端收到 SIGTERM 后优雅退出。</li></ul></div>
+            <div class="panel"><h4>压测脚本</h4><pre>./chat_bench \
+  --clients 100 \
+  --rooms 5 \
+  --messages 1000 \
+  --message-size 128</pre></div>
+            <div class="panel wide"><h4>改进任务</h4><ol><li>限制单连接输入缓冲和输出缓冲大小。</li><li>业务线程池排队过长时拒绝新请求。</li><li>日志增加连接数、QPS、错误数、平均耗时。</li><li>用 ASan、TSan、Valgrind 或 <code>/proc</code> 检查泄漏和竞争。</li></ol></div>
+            <div class="panel"><h4>验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>畸形输入不会导致进程崩溃</span></label><label class="check"><input type="checkbox"><span>慢客户端会被限流或断开</span></label><label class="check"><input type="checkbox"><span>压测报告包含吞吐、延迟、错误率和资源占用</span></label></div></div>
+            <div class="panel"><h4>复盘题</h4><p>服务变慢时，瓶颈是在网络、CPU、锁、数据库还是 Redis？你要用数据回答，而不是凭感觉。</p></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="day" id="day24">
+        <aside class="day-index"><span>DAY 24</span><strong>项目收尾与面试表达</strong><small>把经历整理成作品</small></aside>
+        <div><p class="goal"><b>今日目标：</b>完成 README、架构图、演示脚本和复盘文档，让这个项目能放进简历并经得住追问。</p>
+          <div class="day-grid">
+            <div class="panel"><h4>README 必备内容</h4><ul><li>项目目标和功能清单。</li><li>架构图：Reactor、业务线程池、MySQL、Redis。</li><li>协议格式和错误码。</li><li>构建、运行、初始化数据库、压测方法。</li><li>关键问题：粘包、短写、连接生命周期、缓存一致性。</li></ul></div>
+            <div class="panel"><h4>演示脚本</h4><pre>1. 启动 MySQL / Redis
+2. 初始化 schema
+3. 启动 chat_server
+4. 打开 3 个 chat_client
+5. 注册 / 登录 / 加入房间 / 群聊 / 私聊
+6. 展示历史消息和压测结果</pre></div>
+            <div class="panel wide"><h4>收尾任务</h4><ol><li>清理代码目录，保证一条命令可构建。</li><li>补齐核心单元测试和协议测试。</li><li>写 10 个面试追问题答案。</li><li>录一段 5 分钟演示：架构、运行、压测、异常处理。</li></ol></div>
+            <div class="panel"><h4>最终验收</h4><div class="checklist"><label class="check"><input type="checkbox"><span>陌生环境按 README 能跑起来</span></label><label class="check"><input type="checkbox"><span>项目演示不依赖口头补丁</span></label><label class="check"><input type="checkbox"><span>能解释每个核心类为什么存在</span></label><label class="check"><input type="checkbox"><span>能回答 epoll、Reactor、MySQL、Redis 在项目中的具体作用</span></label></div></div>
+            <div class="panel"><h4>简历表达</h4><p>不要写“熟悉 epoll、MySQL、Redis”。写“基于 epoll + Reactor 实现聊天室服务端，支持长度前缀协议、连接超时、MySQL 持久化、Redis 在线状态和登录限流，并完成 100 客户端压测”。</p></div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section id="finish">
+      <div class="section-kicker">Definition of done</div><h2>Day 24 结束时应该拿出的证据</h2>
+      <p class="section-intro">如果下面这些都能拿出来，这一阶段就不是“学过”，而是有了一个可以继续扩展、可以被追问的 Linux C++ 后台项目。</p>
+      <div class="deliverables">
+        <article class="card"><span class="num">CODE</span><h3>完整聊天室仓库</h3><p>CMake 构建；包含 Reactor、epoll、线程池、协议解析、MySQL、Redis、客户端、压测脚本。</p></article>
+        <article class="card"><span class="num">EVIDENCE</span><h3>实验与压测报告</h3><p>包含 epoll LT/ET 对比、EAGAIN 处理、数据库连接池、Redis 限流、100 客户端压测和异常输入测试。</p></article>
+        <article class="card"><span class="num">EXPLAIN</span><h3>面试可讲清楚</h3><p>能讲清事件循环、连接生命周期、消息边界、线程归属、SQL 注入防护、缓存边界和服务降级。</p></article>
+      </div>
+      <div class="callout" style="margin-top:22px"><b>下一阶段建议：</b>Day 25 以后再考虑多 Reactor、多进程部署、TLS、HTTP/WebSocket、Protobuf、Redis Streams、Prometheus 指标和 CI。先别急着扩技术栈，先把这版聊天室做扎实。</div>
+    </section>
+  </main>
+
+  <div class="progress-box" aria-live="polite">
+    <div class="progress-label"><span>任务完成度</span><b id="progressText">0 / 0</b></div>
+    <div class="progress-track"><div class="progress-bar" id="progressBar"></div></div>
+  </div>
+  <footer><div class="wrap">Linux C++ 服务器开发 · Day 11-24 进阶执行手册　|　生成于 2026-06-20　|　原前 10 天计划未修改</div></footer>
+  <script>
+    const checks = [...document.querySelectorAll('input[type="checkbox"]')];
+    const key = 'linux-server-day11-24-progress-v1';
+    const saved = JSON.parse(localStorage.getItem(key) || '[]');
+    checks.forEach((box, i) => {
+      box.checked = !!saved[i];
+      box.addEventListener('change', update);
+    });
+    function update() {
+      const state = checks.map(box => box.checked);
+      localStorage.setItem(key, JSON.stringify(state));
+      const done = state.filter(Boolean).length;
+      document.getElementById('progressText').textContent = `${done} / ${checks.length}`;
+      document.getElementById('progressBar').style.width = checks.length ? `${done / checks.length * 100}%` : '0%';
+    }
+    update();
+  </script>
+</body>
+</html>
