@@ -33,6 +33,16 @@
     .nav-inner { display: flex; gap: 9px; padding: 12px 0; overflow-x: auto; scrollbar-width: thin; }
     nav a { flex: 0 0 auto; text-decoration: none; color: var(--muted); padding: 7px 11px; border-radius: 9px; font-size: 14px; }
     nav a:hover { color: var(--text); background: var(--panel-2); }
+    nav a.nav-cta { margin-left: 8px; color: var(--amber); border: 1px solid #514624; padding: 7px 13px; background: rgba(33,29,18,.6); }
+    nav a.nav-cta:hover { background: rgba(255,189,102,.14); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+    .cta { display: inline-flex; align-items: center; gap: 9px; padding: 12px 20px; border: 1px solid var(--amber); border-radius: 999px; color: var(--amber); background: rgba(255,189,102,.08); text-decoration: none; font-weight: 700; letter-spacing: .03em; transition: background .15s, transform .15s, box-shadow .15s; }
+    .cta:hover { background: rgba(255,189,102,.18); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,189,102,.18); }
+    .cta .arr { transition: transform .15s; display: inline-block; }
+    .cta:hover .arr { transform: translateX(-3px); }
+    .cta.cyan { border-color: var(--cyan); color: var(--cyan); background: rgba(67,217,211,.08); }
+    .cta.cyan:hover { background: rgba(67,217,211,.18); box-shadow: 0 8px 24px rgba(67,217,211,.18); }
+    .cta.cyan:hover .arr { transform: translateX(3px); }
     main { padding: 70px 0 100px; }
     section { margin-bottom: 92px; scroll-margin-top: 85px; }
     .section-kicker { color: var(--cyan); font-size: 13px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
@@ -115,6 +125,7 @@
     <a href="#day15">D15</a><a href="#day16">D16</a><a href="#day17">D17</a><a href="#day18">D18</a>
     <a href="#day19">D19</a><a href="#day20">D20</a><a href="#day21">D21</a><a href="#day22">D22</a>
     <a href="#day23">D23</a><a href="#day24">D24</a><a href="#finish">最终验收</a>
+    <a class="nav-cta" href="./">← 前 10 天</a>
   </div></nav>
 
   <main class="wrap">
@@ -399,6 +410,9 @@ if count &gt; 20:
         <article class="card"><span class="num">EXPLAIN</span><h3>面试可讲清楚</h3><p>能讲清事件循环、连接生命周期、消息边界、线程归属、SQL 注入防护、缓存边界和服务降级。</p></article>
       </div>
       <div class="callout" style="margin-top:22px"><b>下一阶段建议：</b>Day 25 以后再考虑多 Reactor、多进程部署、TLS、HTTP/WebSocket、Protobuf、Redis Streams、Prometheus 指标和 CI。先别急着扩技术栈，先把这版聊天室做扎实。</div>
+      <div class="cta-row">
+        <a class="cta" href="./">返回前 10 天计划 <span class="arr">←</span></a>
+      </div>
     </section>
   </main>
 

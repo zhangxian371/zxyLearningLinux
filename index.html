@@ -33,6 +33,16 @@
     .nav-inner { display: flex; gap: 9px; padding: 12px 0; overflow-x: auto; scrollbar-width: thin; }
     nav a { flex: 0 0 auto; text-decoration: none; color: var(--muted); padding: 7px 11px; border-radius: 9px; font-size: 14px; }
     nav a:hover { color: var(--text); background: var(--panel-2); }
+    nav a.nav-cta { margin-left: 8px; color: var(--cyan); border: 1px solid #245775; padding: 7px 13px; background: rgba(10,34,51,.6); }
+    nav a.nav-cta:hover { background: rgba(67,217,211,.14); }
+    .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+    .cta { display: inline-flex; align-items: center; gap: 9px; padding: 12px 20px; border: 1px solid var(--cyan); border-radius: 999px; color: var(--cyan); background: rgba(67,217,211,.08); text-decoration: none; font-weight: 700; letter-spacing: .03em; transition: background .15s, transform .15s, box-shadow .15s; }
+    .cta:hover { background: rgba(67,217,211,.18); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(67,217,211,.18); }
+    .cta .arr { transition: transform .15s; display: inline-block; }
+    .cta:hover .arr { transform: translateX(3px); }
+    .cta.amber { border-color: var(--amber); color: var(--amber); background: rgba(255,189,102,.08); }
+    .cta.amber:hover { background: rgba(255,189,102,.18); box-shadow: 0 8px 24px rgba(255,189,102,.18); }
+    .cta.amber:hover .arr { transform: translateX(-3px); }
     main { padding: 70px 0 100px; }
     section { margin-bottom: 92px; scroll-margin-top: 85px; }
     .section-kicker { color: var(--cyan); font-size: 13px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; }
@@ -124,6 +134,7 @@
     <a href="#day1">D1</a><a href="#day2">D2</a><a href="#day3">D3</a><a href="#day4">D4</a><a href="#day5">D5</a>
     <a href="#day6">D6</a><a href="#day7">D7</a><a href="#day8">D8</a><a href="#day9">D9</a><a href="#day10">D10</a>
     <a href="#finish">最终验收</a>
+    <a class="nav-cta" href="./linux-cpp-study-plan-day11-24.html">Day 11–24 →</a>
   </div></nav>
 
   <main class="wrap">
@@ -364,6 +375,9 @@ top -H -p &lt;SERVER_PID&gt;</pre></div>
         <article class="card"><span class="num">EXPLAIN</span><h3>8 个口述答案</h3><p>进程线程、fd、TCP 握手、TIME_WAIT、Socket 流程、粘包半包、RAII、条件变量。</p></article>
       </div>
       <div class="callout" style="margin-top:22px"><b>下一阶段：</b>如果以上验收基本通过，第 11 天开始学习非阻塞 I/O，随后依次实现 select、poll、epoll LT、epoll ET，最终进入 Reactor。若协议解析、资源生命周期或线程退出仍不稳定，先用 2-3 天补牢，不要急着堆 epoll。</div>
+      <div class="cta-row">
+        <a class="cta" href="./linux-cpp-study-plan-day11-24.html">进入 Day 11–24 进阶计划 <span class="arr">→</span></a>
+      </div>
     </section>
   </main>
 
