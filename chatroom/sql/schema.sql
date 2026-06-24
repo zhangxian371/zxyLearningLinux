@@ -1,0 +1,38 @@
+CREATE DATABASE IF NOT EXISTS chatroom DEFAULT CHARACTER SET utf8mb4;
+USE chatroom;
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(64) NOT NULL UNIQUE,
+  password_hash VARCHAR(128) NOT NULL,
+  salt VARCHAR(64) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS rooms (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(64) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS room_members (
+  room_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(room_id, user_id),
+  INDEX idx_member_user(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  room_id BIGINT,
+  from_user BIGINT NOT NULL,
+  to_user BIGINT,
+  content VARCHAR(4096) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_room_msg(room_id, id),
+  INDEX idx_dm_msg(from_user, to_user, id)
+);
+
+INSERT IGNORE INTO rooms(id, name) VALUES (1, 'lobby');
+
